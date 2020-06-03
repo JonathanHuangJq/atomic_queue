@@ -54,6 +54,8 @@ ldlibs.moodycamel :=
 cppflags.xenium := -I${abspath ../xenium}
 ldlibs.xenium :=
 
+ldlibs.folly := -lfolly -lglog -lssl -lcrypto -ldouble-conversion -levent
+
 COMPILE.CXX = ${CXX} -o $@ -c ${cppflags} ${cxxflags} -MD -MP $(abspath $<)
 COMPILE.S = ${CXX} -o- -S -masm=intel ${cppflags} ${cxxflags} $(abspath $<) | c++filt | egrep -v '^[[:space:]]*\.(loc|cfi|L[A-Z])' > $@
 PREPROCESS.CXX = ${CXX} -o $@ -E ${cppflags} ${cxxflags} $(abspath $<)
@@ -74,13 +76,12 @@ ${build_dir}/libatomic_queue.a : $(addprefix ${build_dir}/,cpu_base_frequency.o 
 -include ${build_dir}/huge_pages.d
 
 ${build_dir}/benchmarks : cppflags += ${cppflags.tbb} ${cppflags.moodycamel} ${cppflags.xenium}
-${build_dir}/benchmarks : ldlibs += ${ldlibs.tbb} ${ldlibs.moodycamel} ${ldlibs.xenium} -ldl
+${build_dir}/benchmarks : ldlibs += ${ldlibs.tbb} ${ldlibs.moodycamel} ${ldlibs.xenium} ${ldlibs.folly} -ldl
 ${build_dir}/benchmarks : ${build_dir}/benchmarks.o ${build_dir}/libatomic_queue.a Makefile | ${build_dir}
 	$(strip ${LINK.EXE})
 -include ${build_dir}/benchmarks.d
 
-${build_dir}/tests : cppflags += ${cppflags.moodycamel}
-${build_dir}/tests : ldlibs += ${ldlibs.moodycamel} -lboost_unit_test_framework
+${build_dir}/tests : -lboost_unit_test_framework
 ${build_dir}/tests : ${build_dir}/tests.o Makefile | ${build_dir}
 	$(strip ${LINK.EXE})
 -include ${build_dir}/tests.d
